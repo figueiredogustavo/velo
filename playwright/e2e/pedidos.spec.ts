@@ -1,21 +1,14 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/fixtures'
 import { generateOrderCode } from '../support/helpers'
-import { OrderLookupPage, OrderDetails } from '../support/pages/OrderLookupPage'
-import { Navbar } from '../support/components/Navbar'
-import {LandingPage} from '../support/pages/LandingPage'
+import type { OrderDetails } from '../support/actions/orderLookupActions'
 
 test.describe('Consulta de Pedido', () => {
 
-  let orderLookupPage: OrderLookupPage
-
-  test.beforeEach(async ({ page }) => {
-    await new LandingPage(page).goto()
-    await new Navbar(page).orderLookupLink()
-    orderLookupPage = new OrderLookupPage(page)
-    await orderLookupPage.validatePageLoaded()
+  test.beforeEach(async ({ app }) => {
+    await app.orderLookup.open()
   })
 
-  test('deve consultar um pedido aprovado', async ({ page }) => {
+  test('deve consultar um pedido aprovado', async ({ app }) => {
 
     // Test Data
     const order: OrderDetails = {
@@ -29,11 +22,12 @@ test.describe('Consulta de Pedido', () => {
       },
       payment: 'À Vista'
     }
-    await orderLookupPage.searchOrder(order.number)
-    await orderLookupPage.validateOrderDetails(order)
+    await app.orderLookup.searchOrder(order.number)
+    await app.orderLookup.validateOrderDetails(order)
+    await app.orderLookup.validateStatusBadge(order.status)
   })
 
-  test('deve consultar um pedido reprovado', async ({ page }) => {
+  test('deve consultar um pedido reprovado', async ({ app }) => {
     const order: OrderDetails = {
       number: 'VLO-5B2CAH',
       status: 'REPROVADO',
@@ -46,11 +40,12 @@ test.describe('Consulta de Pedido', () => {
       payment: 'À Vista'
     }
 
-    await orderLookupPage.searchOrder(order.number)
-    await orderLookupPage.validateOrderDetails(order)
+    await app.orderLookup.searchOrder(order.number)
+    await app.orderLookup.validateOrderDetails(order)
+    await app.orderLookup.validateStatusBadge(order.status)
   })
 
-  test('deve consultar um pedido em analise', async ({ page }) => {
+  test('deve consultar um pedido em analise', async ({ app }) => {
     const order: OrderDetails = {
       number: 'VLO-B4Z5FQ',
       status: 'EM_ANALISE',
@@ -62,25 +57,22 @@ test.describe('Consulta de Pedido', () => {
       },
       payment: 'À Vista'
     }
-    await orderLookupPage.searchOrder(order.number)
-    await orderLookupPage.validateOrderDetails(order)
+    await app.orderLookup.searchOrder(order.number)
+    await app.orderLookup.validateOrderDetails(order)
+    await app.orderLookup.validateStatusBadge(order.status)
   })
 
-  test('deve exibir mensagem quando o pedido não é encontrado', async ({ page }) => {
+  test('deve exibir mensagem quando o pedido não é encontrado', async ({ app }) => {
 
     const order = generateOrderCode()
-
-    await orderLookupPage.searchOrder(order)
-
-    await orderLookupPage.validateOrderNotFound()
+    await app.orderLookup.searchOrder(order)
+    await app.orderLookup.validateOrderNotFound()
   })
 
-  test('deve exibir mensagem quando o código do pedido está fora do padrão', async ({ page }) => {
+  test('deve exibir mensagem quando o código do pedido está fora do padrão', async ({ app }) => {
 
     const orderNumber = 'CODIGO-INVALIDO'
-
-    await orderLookupPage.searchOrder(orderNumber)
-
-    await orderLookupPage.validateOrderNotFound()
+    await app.orderLookup.searchOrder(orderNumber)
+    await app.orderLookup.validateOrderNotFound()
   })
 })
