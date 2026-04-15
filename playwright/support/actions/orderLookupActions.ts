@@ -7,18 +7,16 @@ export type OrderDetails = {
   status: OrderStatus
   color: string
   wheels: string
-  customer: {
-    name: string
-    email: string
-  }
+  customer: { name: string; email: string; document: string; phone: string }
   payment: string
+  total_price: string
 }
 
 export function createOrderLookupActions(page: Page) {
 
   const orderInput = page.getByRole('textbox', { name: 'Número do Pedido' })
   const searchButton = page.getByRole('button', { name: 'Buscar Pedido' })
-  
+
   return {
 
     elements: {
@@ -35,8 +33,8 @@ export function createOrderLookupActions(page: Page) {
       await expect(page.getByRole('heading')).toContainText('Consultar Pedido')
     },
 
-    async searchOrder(orderNumber: string) {
-      await orderInput.fill(orderNumber)
+    async searchOrder(code: string) {
+      await orderInput.fill(code)
       await searchButton.click()
     },
 
@@ -69,32 +67,24 @@ export function createOrderLookupActions(page: Page) {
       - heading "Pagamento" [level=4]
       - paragraph: ${order.payment}
       - paragraph: /R\\$ \\d+\\.\\d+,\\d+/
-        `
+      `
       await expect(page.getByTestId(`order-result-${order.number}`)).toMatchAriaSnapshot(snapshot)
-    },
-
-    async validateOrderNotFound() {
-      await expect(page.locator('#root')).toMatchAriaSnapshot(`
-      - img
-      - heading "Pedido não encontrado" [level=3]
-      - paragraph: Verifique o número do pedido e tente novamente
-    `)
     },
 
     async validateStatusBadge(status: OrderStatus) {
       const statusClasses = {
         APROVADO: {
-          bgClass: 'bg-green-100',
+          background: 'bg-green-100',
           text: 'text-green-700',
           icon: 'lucide-circle-check-big',
         },
         REPROVADO: {
-          bgClass: 'bg-red-100',
+          background: 'bg-red-100',
           text: 'text-red-700',
           icon: 'lucide-circle-x',
         },
         EM_ANALISE: {
-          bgClass: 'bg-amber-100',
+          background: 'bg-amber-100',
           text: 'text-amber-700',
           icon: 'lucide-clock',
         },
@@ -103,10 +93,17 @@ export function createOrderLookupActions(page: Page) {
       const classes = statusClasses[status]
       const statusBadge = page.getByRole('status').filter({ hasText: status })
 
-      await expect(statusBadge).toHaveClass(new RegExp(classes.bgClass))
+      await expect(statusBadge).toHaveClass(new RegExp(classes.background))
       await expect(statusBadge).toHaveClass(new RegExp(classes.text))
       await expect(statusBadge.locator('svg')).toHaveClass(new RegExp(classes.icon))
     },
+
+    async validateOrderNotFound() {
+      await expect(page.locator('#root')).toMatchAriaSnapshot(`
+      - img
+      - heading "Pedido não encontrado" [level=3]
+      - paragraph: Verifique o número do pedido e tente novamente
+      `)
+    },
   }
 }
-
