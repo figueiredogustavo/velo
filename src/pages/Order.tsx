@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import InputMask from 'react-input-mask';
+import ReactInputMask from 'react-input-mask';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
@@ -58,12 +58,46 @@ const stores = [
   'Velô Ibirapuera - Av. Ibirapuera, 3000',
 ];
 
+const onlyDigits = (value: string): string => value.replace(/\D/g, '');
+
+const isValidCpf = (value: string): boolean => {
+  const cpf = onlyDigits(value);
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  const calcDigit = (base: string, factor: number): number => {
+    let total = 0;
+    for (let i = 0; i < base.length; i++) {
+      total += Number(base[i]) * (factor - i);
+    }
+    const mod = total % 11;
+    return mod < 2 ? 0 : 11 - mod;
+  };
+
+  const d1 = calcDigit(cpf.slice(0, 9), 10);
+  const d2 = calcDigit(cpf.slice(0, 10), 11);
+  return cpf.endsWith(`${d1}${d2}`);
+};
+
+const isValidEmailStrict = (value: string): boolean => {
+  const email = value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
+  if (email.includes('@.') || email.includes('..')) return false;
+  return true;
+};
+
 const orderSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  surname: z.string().min(2, 'Sobrenome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('Email inválido'),
-  phone: z.string().min(14, 'Telefone inválido'),
-  cpf: z.string().min(14, 'CPF inválido'),
+  name: z.string().trim().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  surname: z.string().trim().min(2, 'Sobrenome deve ter pelo menos 2 caracteres'),
+  email: z
+    .string()
+    .trim()
+    .email('Email inválido')
+    .refine(isValidEmailStrict, 'Email inválido'),
+  phone: z
+    .string()
+    .refine((val) => onlyDigits(val).length === 11, 'Telefone inválido'),
+  cpf: z.string().refine((val) => isValidCpf(val), 'CPF inválido'),
   store: z.string().min(1, 'Selecione uma loja'),
   terms: z.boolean().refine((val) => val === true, 'Aceite os termos'),
 });
@@ -75,6 +109,9 @@ const colorLabels: Record<ExteriorColor, string> = {
   'lunar-white': 'Lunar White',
   'midnight-black': 'Midnight Black',
 };
+
+// Compatibilidade de tipos com React 18 + react-input-mask.
+const InputMask = ReactInputMask as unknown as React.ElementType;
 
 const Order = () => {
   const navigate = useNavigate();
@@ -257,7 +294,7 @@ const Order = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Form */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form noValidate onSubmit={handleSubmit} className="space-y-8">
               {/* Personal Info */}
               <section className="bg-card rounded-lg p-6 shadow-elegant">
                 <h2 className="font-display text-lg font-semibold mb-6">Dados Pessoais</h2>
