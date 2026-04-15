@@ -1,6 +1,9 @@
 import { Page, expect } from '@playwright/test'
 
 export function createConfiguratorActions(page: Page) {
+  const getOptionalCheckbox = (name: string) =>
+    page.getByRole('checkbox', { name })
+
   return {
     async open() {
       await page.goto('/configure')
@@ -12,6 +15,21 @@ export function createConfiguratorActions(page: Page) {
 
     async selectWheels(name: string | RegExp) {
       await page.getByRole('button', { name }).click()
+    },
+
+    async checkOptional(name: string) {
+      await getOptionalCheckbox(name).check()
+      await expect(getOptionalCheckbox(name)).toBeChecked()
+    },
+
+    async uncheckOptional(name: string) {
+      await getOptionalCheckbox(name).uncheck()
+      await expect(getOptionalCheckbox(name)).not.toBeChecked()
+    },
+
+    async goToCheckout() {
+      await page.getByRole('button', { name: 'Monte o Seu' }).click()
+      await expect(page).toHaveURL(/\/order$/)
     },
 
     async expectPrice(price: string) {
