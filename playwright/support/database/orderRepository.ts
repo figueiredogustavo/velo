@@ -40,3 +40,14 @@ export async function insertOrder(order: OrderDetails) {
 export async function deleteOrderByNumber(orderNumber: string) {
     await db.deleteFrom('orders').where('order_number', '=', orderNumber).execute()
 }
+
+export async function deletePreciseOrder(cpf: string, email: string, paymentMethod: string) {
+    const formattedCpf = cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+    const normalizedPayment = normalizeValue(paymentMethod)
+    
+    await db.deleteFrom('orders')
+        .where('customer_cpf', '=', formattedCpf)
+        .where('customer_email', '=', email)
+        .where('payment_method', '=', normalizedPayment)
+        .execute()
+}

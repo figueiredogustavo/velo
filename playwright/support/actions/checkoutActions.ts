@@ -47,6 +47,12 @@ export function createCheckoutActions(page: Page) {
       await page.getByRole('option', { name: storeName }).click()
     },
 
+    async setPaymentMethod(methodName: string) {
+      const tab = page.getByText(methodName, { exact: true })
+      await expect(tab).toBeVisible()
+      await tab.click()
+    },
+
     async acceptTerms() {
       await terms.check()
     },

@@ -1,4 +1,5 @@
 import { test, expect } from '../support/fixtures'
+import { deletePreciseOrder } from '../support/database/orderRepository'
 
 test.describe('Checkout', () => {
 
@@ -116,5 +117,46 @@ test.describe('Checkout', () => {
       // Assert
       await expect(alerts.terms).toHaveText('Aceite os termos')
     })
+  })
+
+})
+
+test.describe('Pagamento e Confirmação', () => {
+  test('deve criar um pedido com sucesso para pagamento à vista', async ({ app, page }) => {
+
+    const customer = {
+      name: 'Gustavo',
+      lastname: 'Figueiredo',
+      email: 'gustavo@teste.com',
+      document: '09558904627',
+      phone: '(11) 99999-9999',
+      store: 'Velô Paulista',
+      paymentMethod: 'À Vista',
+      totalPrice: 'R$ 40.000,00'
+    }
+
+    // Clean up pre-requisites
+    await deletePreciseOrder(customer.document, customer.email, customer.paymentMethod)
+
+    // Arrange
+    await page.goto('/')
+    await page.getByRole('link', { name: 'Configure Agora' }).click()
+
+    await app.configurator.expectPrice(customer.totalPrice)
+    await app.configurator.finishConfigurator()
+
+    await app.checkout.expectLoaded()
+    await app.checkout.fillCustomerlData(customer)
+    await app.checkout.selectStore(customer.store)
+
+    // Act
+    await app.checkout.setPaymentMethod(customer.paymentMethod)
+    await app.checkout.expectSummaryTotal(customer.totalPrice)
+    await app.checkout.acceptTerms()
+    await app.checkout.submit()
+
+    // Assert
+    await expect(page).toHaveURL(/\/(success)/)
+    await expect(page.getByRole('heading', { name: 'Pedido Aprovado!' })).toBeVisible()
   })
 })
