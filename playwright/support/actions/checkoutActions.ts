@@ -14,7 +14,9 @@ export function createCheckoutActions(page: Page) {
     terms: page.getByTestId('error-terms')
   }
 
+
   return {
+
     elements: {
       terms,
       alerts
@@ -47,10 +49,8 @@ export function createCheckoutActions(page: Page) {
       await page.getByRole('option', { name: storeName }).click()
     },
 
-    async setPaymentMethod(methodName: string) {
-      const tab = page.getByText(methodName, { exact: true })
-      await expect(tab).toBeVisible()
-      await tab.click()
+    async selectPaymentMethod(method: string) {
+      await page.getByRole('button', { name: new RegExp(method, 'i') }).click()
     },
 
     async acceptTerms() {
