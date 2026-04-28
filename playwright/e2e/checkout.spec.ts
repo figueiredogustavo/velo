@@ -2,7 +2,6 @@ import { test, expect } from '../support/fixtures'
 import { deleteOrderByEmail } from '../support/database/orderRepository'
 
 test.describe('Checkout', () => {
-
   test.describe('Validações de campos obrigatórios', () => {
 
     let alerts: any
@@ -120,31 +119,11 @@ test.describe('Checkout', () => {
 
   test.describe('Pagamento e Confirmação', () => {
 
-    const mockCreditScore = async (page: any, score: number) => {
-      await page.route('**/functions/v1/credit-analysis', async (route: any) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            status: 'Done',
-            score: score,
-          }),
-        })
-      })
-    }
+    test.beforeEach(async ({ app }) => {
+      await app.hero.open()
+    })
 
-    const arrangeCheckout = async (page: any, app: any, customer: any) => {
-      await app.home.openConfigurator()
-
-      await app.configurator.expectPrice(customer.totalPrice)
-      await app.configurator.finishConfigurator()
-      await app.checkout.expectLoaded()
-
-      await app.checkout.fillCustomerlData(customer)
-      await app.checkout.selectStore(customer.store)
-    }
-
-    test('deve criar um pedido com sucesso para pagamento à vista', async ({ page, app }) => {
+    test('deve criar um pedido com sucesso para pagamento à vista', async ({ app }) => {
 
       const customer = {
         name: 'Fernando',
@@ -160,7 +139,12 @@ test.describe('Checkout', () => {
       await deleteOrderByEmail(customer.email)
 
       // Arrange
-      await arrangeCheckout(page, app, customer)
+      await app.configurator.expectPrice(customer.totalPrice)
+      await app.configurator.finishConfigurator()
+
+      await app.checkout.expectLoaded()
+      await app.checkout.fillCustomerlData(customer)
+      await app.checkout.selectStore(customer.store)
 
       // Act
       await app.checkout.selectPaymentMethod(customer.paymentMethod)
@@ -169,10 +153,10 @@ test.describe('Checkout', () => {
       await app.checkout.submit()
 
       // Assert
-      await app.success.expectStatus('Pedido Aprovado!')
+      await app.checkout.expectResult('Pedido Aprovado!')
     })
 
-    test('deve aprovar automaticamente o crédito quando o score do CPF for maior que 700 no financiamento', async ({ page, app }) => {
+    test('deve aprovar automaticamente o crédito quando o score do CPF for maior que 700 no financiamento', async ({ app }) => {
 
       const customer = {
         name: 'Steve',
@@ -187,10 +171,15 @@ test.describe('Checkout', () => {
 
       await deleteOrderByEmail(customer.email)
 
-      await mockCreditScore(page, 710)
+      await app.mock.creditAnalysis(710)
 
       // Arrange
-      await arrangeCheckout(page, app, customer)
+      await app.configurator.expectPrice(customer.totalPrice)
+      await app.configurator.finishConfigurator()
+
+      await app.checkout.expectLoaded()
+      await app.checkout.fillCustomerlData(customer)
+      await app.checkout.selectStore(customer.store)
 
       // Act
       await app.checkout.selectPaymentMethod(customer.paymentMethod)
@@ -199,10 +188,10 @@ test.describe('Checkout', () => {
       await app.checkout.submit()
 
       // Assert
-      await app.success.expectStatus('Pedido Aprovado!')
+      await app.checkout.expectResult('Pedido Aprovado!')
     })
 
-    test('deve encaminhar para análise de crédito quando o score do CPF for entre 501 e 700 no financiamento', async ({ page, app }) => {
+    test('deve encaminhar para análise de crédito quando o score do CPF for entre 501 e 700 no financiamento', async ({ app }) => {
 
       const customer = {
         name: 'Tony',
@@ -217,10 +206,15 @@ test.describe('Checkout', () => {
 
       await deleteOrderByEmail(customer.email)
 
-      await mockCreditScore(page, 600)
+      await app.mock.creditAnalysis(600)
 
       // Arrange
-      await arrangeCheckout(page, app, customer)
+      await app.configurator.expectPrice(customer.totalPrice)
+      await app.configurator.finishConfigurator()
+
+      await app.checkout.expectLoaded()
+      await app.checkout.fillCustomerlData(customer)
+      await app.checkout.selectStore(customer.store)
 
       // Act
       await app.checkout.selectPaymentMethod(customer.paymentMethod)
@@ -228,10 +222,10 @@ test.describe('Checkout', () => {
       await app.checkout.submit()
 
       // Assert
-      await app.success.expectStatus('Pedido em Análise!')
+      await app.checkout.expectResult('Pedido em Análise!')
     })
 
-    test('deve reprovar o crédito quando o score do CPF for menor ou igual a 500 no financiamento sem entrada', async ({ page, app }) => {
+    test('deve reprovar o crédito quando o score do CPF for menor ou igual a 500 no financiamento sem entrada', async ({ app }) => {
 
       const customer = {
         name: 'Clark',
@@ -246,10 +240,15 @@ test.describe('Checkout', () => {
 
       await deleteOrderByEmail(customer.email)
 
-      await mockCreditScore(page, 500)
+      await app.mock.creditAnalysis(500)
 
       // Arrange
-      await arrangeCheckout(page, app, customer)
+      await app.configurator.expectPrice(customer.totalPrice)
+      await app.configurator.finishConfigurator()
+
+      await app.checkout.expectLoaded()
+      await app.checkout.fillCustomerlData(customer)
+      await app.checkout.selectStore(customer.store)
 
       // Act
       await app.checkout.selectPaymentMethod(customer.paymentMethod)
@@ -257,10 +256,10 @@ test.describe('Checkout', () => {
       await app.checkout.submit()
 
       // Assert
-      await app.success.expectStatus(/Crédito Reprovado/i)
+      await app.checkout.expectResult('Pedido Reprovado!')
     })
 
-    test('deve reprovar o crédito quando o score do CPF for menor ou igual a 500 no financiamento com entrada menor que 50%', async ({ page, app }) => {
+    test('deve reprovar o crédito quando o score do CPF for menor ou igual a 500 no financiamento com entrada menor que 50%', async ({ app }) => {
 
       const customer = {
         name: 'Diana',
@@ -276,10 +275,15 @@ test.describe('Checkout', () => {
 
       await deleteOrderByEmail(customer.email)
 
-      await mockCreditScore(page, 500)
+      await app.mock.creditAnalysis(500)
 
       // Arrange
-      await arrangeCheckout(page, app, customer)
+      await app.configurator.expectPrice(customer.totalPrice)
+      await app.configurator.finishConfigurator()
+
+      await app.checkout.expectLoaded()
+      await app.checkout.fillCustomerlData(customer)
+      await app.checkout.selectStore(customer.store)
 
       // Act
       await app.checkout.selectPaymentMethod(customer.paymentMethod)
@@ -288,10 +292,10 @@ test.describe('Checkout', () => {
       await app.checkout.submit()
 
       // Assert
-      await app.success.expectStatus(/Crédito Reprovado/i)
+      await app.checkout.expectResult('Pedido Reprovado!')
     })
 
-    test('deve reprovar o crédito quando o score do CPF for menor ou igual a 500 no financiamento com entrada igual a 50%', async ({ page, app }) => {
+    test('deve reprovar o crédito quando o score do CPF for menor ou igual a 500 no financiamento com entrada igual a 50%', async ({ app }) => {
 
       const customer = {
         name: 'Richard',
@@ -307,10 +311,15 @@ test.describe('Checkout', () => {
 
       await deleteOrderByEmail(customer.email)
 
-      await mockCreditScore(page, 450)
+      await app.mock.creditAnalysis(450)
 
       // Arrange
-      await arrangeCheckout(page, app, customer)
+      await app.configurator.expectPrice(customer.totalPrice)
+      await app.configurator.finishConfigurator()
+
+      await app.checkout.expectLoaded()
+      await app.checkout.fillCustomerlData(customer)
+      await app.checkout.selectStore(customer.store)
 
       // Act
       await app.checkout.selectPaymentMethod(customer.paymentMethod)
@@ -319,10 +328,10 @@ test.describe('Checkout', () => {
       await app.checkout.submit()
 
       // Assert
-      await app.success.expectStatus(/Pedido Aprovado/i)
+      await app.checkout.expectResult('Pedido Aprovado!')
     })
 
-    test('deve reprovar o crédito quando o score do CPF for menor ou igual a 500 no financiamento com entrada maior que 50%', async ({ page, app }) => {
+    test('deve reprovar o crédito quando o score do CPF for menor ou igual a 500 no financiamento com entrada mair que 50%', async ({ app }) => {
 
       const customer = {
         name: 'Axl',
@@ -338,10 +347,15 @@ test.describe('Checkout', () => {
 
       await deleteOrderByEmail(customer.email)
 
-      await mockCreditScore(page, 300)
+      await app.mock.creditAnalysis(300)
 
       // Arrange
-      await arrangeCheckout(page, app, customer)
+      await app.configurator.expectPrice(customer.totalPrice)
+      await app.configurator.finishConfigurator()
+
+      await app.checkout.expectLoaded()
+      await app.checkout.fillCustomerlData(customer)
+      await app.checkout.selectStore(customer.store)
 
       // Act
       await app.checkout.selectPaymentMethod(customer.paymentMethod)
@@ -350,7 +364,7 @@ test.describe('Checkout', () => {
       await app.checkout.submit()
 
       // Assert
-      await app.success.expectStatus(/Pedido Aprovado/i)
+      await app.checkout.expectResult('Pedido Aprovado!')
     })
   })
 })

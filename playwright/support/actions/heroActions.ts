@@ -1,8 +1,8 @@
-import { Page } from '@playwright/test'
+import { Page } from "@playwright/test";
 
-export function createHomeActions(page: Page) {
+export function createHeroActions(page: Page) {
   return {
-    async openConfigurator() {
+    async open() {
       await page.goto('/')
       await page.getByRole('link', { name: /Configure Agora/i }).click()
     }
