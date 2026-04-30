@@ -40,7 +40,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'https://velo-figueiredogustavo.vercel.app/',
+    baseURL: 'https://velo-b4knhzv4t-figueiredogustavos-projects.vercel.app/',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on',
@@ -95,7 +95,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'yarn dev',
-    url: 'https://velo-figueiredogustavo.vercel.app/',
+    url: 'https://velo-b4knhzv4t-figueiredogustavos-projects.vercel.app/',
     reuseExistingServer: !process.env.CI,
   },
 });
