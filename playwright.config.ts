@@ -95,7 +95,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'yarn dev',
-    url: 'https://velo-b4knhzv4t-figueiredogustavos-projects.vercel.app/',
+    url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
   },
 });
