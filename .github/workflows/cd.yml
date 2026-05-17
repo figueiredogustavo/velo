@@ -119,6 +119,7 @@ jobs:
         run: yarn playwright test
         env: 
           BASE_URL: ${{ needs.build-and-deploy.outputs.deployment-url }}
+          DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
 
       # 7. Relatório de Testes Automatizados
       - name: Upload Playwright Report
@@ -139,11 +140,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Promove o deploy para produção
-      - name: Vercel promote
+      # 1. Faz checkout do código do repositório
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      # 2. Configura o ambiente Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # 3. Habilita o Corepack para gerenciamento do Yarn
+      - name: Enable Corepack
+        run: corepack enable
+
+      # 4. Instala as dependências do projeto
+      - name: Install dependencies
+        run: yarn install
+
+      # 5. Obter as configurações do vercel para produção
+      - name: Pull Vercel Config (Production)
+        run: yarn vercel pull --yes --environment=production --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
+
+      # 6. Build para o Vercel em Produção
+      - name: Build Vercel (Production)
+        run: yarn vercel build --prod --token=$VERCEL_TOKEN
+
+      # 7. Deploy em Produção
+      - name: Deploy Production
         run: |
-          npx vercel@latest promote \
-          ${{ needs.build-and-deploy.outputs.deployment-url }} \
-          --token=$VERCEL_TOKEN \
-          --scope=$VERCEL_SCOPE \
-          --yes
+          URL=$(yarn --silent vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE)
+          echo "Produção gerada na URL: $URL"
