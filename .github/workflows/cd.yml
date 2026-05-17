@@ -71,7 +71,20 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      # 5. Obter as configurações do vercel
+      # 5. Configura Supabase CLI e Sincroniza Banco (Preview)
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2.0.0
+        with:
+          version: latest
+
+      - name: Sincronizar Supabase (Preview)
+        run: |
+          supabase db push --db-url ${{ secrets.PREVIEW_DATABASE_URL }}
+          supabase functions deploy --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PREVIEW }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      # 6. Obter as configurações do vercel
       - name: Pull Vercel Config
         run: |
           yarn vercel pull \
@@ -80,7 +93,7 @@ jobs:
           --token=$VERCEL_TOKEN \
           --scope=$VERCEL_SCOPE
 
-      # 5.5 Obter variáveis de ambiente da Vercel para o Preview
+      # 7. Obter variáveis de ambiente da Vercel para o Preview
       - name: Pull Vercel Env Variables
         run: |
           yarn vercel env pull .env.local \
@@ -89,13 +102,13 @@ jobs:
           --token=$VERCEL_TOKEN \
           --scope=$VERCEL_SCOPE
 
-      # 6. Build para o Vercel
+      # 8. Build para o Vercel
       - name: Build Vercel
         run: |
           yarn vercel build \
           --token=$VERCEL_TOKEN
 
-      # 7. Deploy preview no vercel
+      # 9. Deploy preview no vercel
       - name: Deploy preview
         id: deploy
         run: |
@@ -183,7 +196,20 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      # 5. Obter as configurações do vercel para produção
+      # 5. Configura Supabase CLI e Sincroniza Banco (Produção)
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2.0.0
+        with:
+          version: latest
+
+      - name: Sincronizar Supabase (Produção)
+        run: |
+          supabase db push --db-url ${{ secrets.PROD_DATABASE_URL }}
+          supabase functions deploy --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PROD }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      # 6. Obter as configurações do vercel para produção
       - name: Pull Vercel Config (Production)
         run: |
           yarn vercel pull \
@@ -192,7 +218,7 @@ jobs:
           --token=$VERCEL_TOKEN \
           --scope=$VERCEL_SCOPE
 
-      # 5.5 Obter variáveis de ambiente da Vercel para Produção
+      # 7. Obter variáveis de ambiente da Vercel para Produção
       - name: Pull Vercel Env Variables (Production)
         run: |
           yarn vercel env pull .env.local \
@@ -201,12 +227,12 @@ jobs:
           --token=$VERCEL_TOKEN \
           --scope=$VERCEL_SCOPE
 
-      # 6. Build para o Vercel em Produção
+      # 8. Build para o Vercel em Produção
       - name: Build Vercel (Production)
         run: |
           yarn vercel build --prod --token=$VERCEL_TOKEN
 
-      # 7. Deploy em Produção
+      # 9. Deploy em Produção
       - name: Deploy Production
         run: |
           URL=$(yarn \
