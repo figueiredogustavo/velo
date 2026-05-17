@@ -133,10 +133,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Faz checkout do código do repositório
+      # 1. Promove o deploy para produção
       - name: Vercel promote
         run: |
-          yarn vercel promote ${{ needs.build-and-deploy.outputs.deployment-url }} \
+          npx vercel@latest promote \
+          ${{ needs.build-and-deploy.outputs.deployment-url }} \
           --token=$VERCEL_TOKEN \
           --scope=$VERCEL_SCOPE \
           --yes
